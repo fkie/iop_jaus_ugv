@@ -82,6 +82,7 @@ void StabilizerDriver_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pManagement_ReceiveFSM->getHandler(), "InternalStateChange_To_Management_ReceiveFSM_Receiving_Ready_Controlled", "StabilizerDriver_ReceiveFSM");
 	registerNotification("Receiving_Ready", pManagement_ReceiveFSM->getHandler(), "InternalStateChange_To_Management_ReceiveFSM_Receiving_Ready", "StabilizerDriver_ReceiveFSM");
 	registerNotification("Receiving", pManagement_ReceiveFSM->getHandler(), "InternalStateChange_To_Management_ReceiveFSM_Receiving", "StabilizerDriver_ReceiveFSM");
+	pEvents_ReceiveFSM->get_event_handler().register_query(QueryStabilizerPosition::ID);
 	ros::NodeHandle pnh("~");
 	std::string manipulator_id;
 	pnh.param("max_up_angle", max_up_angle, 1.5708);
@@ -105,7 +106,6 @@ void StabilizerDriver_ReceiveFSM::setupNotifications()
 	p_sub_jointstates = nh.subscribe<sensor_msgs::JointState>("joint_states", 1, &StabilizerDriver_ReceiveFSM::pJoinStateCallback, this);
 	p_pub_cmd_jointstates = nh.advertise<sensor_msgs::JointState>("cmd_joint_states", 1, false);
 	p_pub_cmd_vel = nh.advertise<std_msgs::Float64MultiArray>("flipper_velocity_controller/command", 1, false);
-	this->pEvents_ReceiveFSM->set_event_report(QueryStabilizerPosition::ID, p_stabilizer_position_report, true);
 }
 
 void StabilizerDriver_ReceiveFSM::sendReportStabilizerCapabilitiesAction(QueryStabilizerCapabilities msg, Receive::Body::ReceiveRec transportData)
@@ -325,7 +325,7 @@ void StabilizerDriver_ReceiveFSM::pJoinStateCallback(const sensor_msgs::JointSta
 		flipper_pos.setStabilizerID(index);
 		p_stabilizer_position_report.getBody()->getStabilizerPosition()->addElement(flipper_pos);
 	}
-	this->pEvents_ReceiveFSM->set_event_report(QueryStabilizerPosition::ID, p_stabilizer_position_report, true);
+	pEvents_ReceiveFSM->get_event_handler().set_report(QueryStabilizerPosition::ID, &p_stabilizer_position_report);
 //  printf("[ManipulatorJointPositionSensor] positions:\n");
 //  std::map<std::string, float>::iterator it_ps;
 //  for (unsigned int index = 0; index < p_joint_names.size(); index++) {
