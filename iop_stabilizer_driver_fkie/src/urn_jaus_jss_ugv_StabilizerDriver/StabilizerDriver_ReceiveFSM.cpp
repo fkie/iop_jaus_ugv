@@ -22,7 +22,7 @@ along with this program; or you can read the full license at
 
 
 #include "urn_jaus_jss_ugv_StabilizerDriver/StabilizerDriver_ReceiveFSM.h"
-
+#include <iop_component_fkie/iop_config.h>
 
 
 
@@ -47,6 +47,8 @@ StabilizerDriver_ReceiveFSM::StabilizerDriver_ReceiveFSM(urn_jaus_jss_core_Trans
 	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
 	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
 	this->pManagement_ReceiveFSM = pManagement_ReceiveFSM;
+	max_up_angle = 1.5708;
+	max_down_angle = -1.5708;
 }
 
 
@@ -83,18 +85,13 @@ void StabilizerDriver_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready", pManagement_ReceiveFSM->getHandler(), "InternalStateChange_To_Management_ReceiveFSM_Receiving_Ready", "StabilizerDriver_ReceiveFSM");
 	registerNotification("Receiving", pManagement_ReceiveFSM->getHandler(), "InternalStateChange_To_Management_ReceiveFSM_Receiving", "StabilizerDriver_ReceiveFSM");
 	pEvents_ReceiveFSM->get_event_handler().register_query(QueryStabilizerPosition::ID);
-	ros::NodeHandle pnh("~");
-	std::string manipulator_id;
-	pnh.param("max_up_angle", max_up_angle, 1.5708);
-	ROS_INFO("max_up_angle: %.4f", max_up_angle);
-	pnh.param("max_down_angle", max_down_angle, -1.5708);
-	ROS_INFO("max_down_angle: %.4f", max_down_angle);
+	iop::Config cfg("~StabilizerDriver");
+	cfg.param("max_up_angle", max_up_angle, max_up_angle);
+	cfg.param("max_down_angle", max_down_angle, max_down_angle);
 	XmlRpc::XmlRpcValue v;
-	pnh.param("joint_names", v, v);
-	ROS_INFO("Used joint_names:");
+	cfg.param("joint_names", v, v);
 	for(unsigned int i = 0; i < v.size(); i++) {
 		p_joint_names.push_back(v[i]);
-		ROS_INFO("  %s", p_joint_names[i].c_str());
 	}
 	// TODO: get limits and positions of each flipper from URDF
 	//   integrate into iop_manipulator_core_fkie::ManipulatorUrdfReader
@@ -102,10 +99,9 @@ void StabilizerDriver_ReceiveFSM::setupNotifications()
 		p_joint_velocities[p_joint_names[index]] = 0.;
 		p_joint_positions[p_joint_names[index]] = 0.;
 	}
-	ros::NodeHandle nh;
-	p_sub_jointstates = nh.subscribe<sensor_msgs::JointState>("joint_states", 1, &StabilizerDriver_ReceiveFSM::pJoinStateCallback, this);
-	p_pub_cmd_jointstates = nh.advertise<sensor_msgs::JointState>("cmd_joint_states", 1, false);
-	p_pub_cmd_vel = nh.advertise<std_msgs::Float64MultiArray>("flipper_velocity_controller/command", 1, false);
+	p_sub_jointstates = cfg.subscribe<sensor_msgs::JointState>("joint_states", 1, &StabilizerDriver_ReceiveFSM::pJoinStateCallback, this);
+	p_pub_cmd_jointstates = cfg.advertise<sensor_msgs::JointState>("cmd_joint_states", 1, false);
+	p_pub_cmd_vel = cfg.advertise<std_msgs::Float64MultiArray>("flipper_velocity_controller/command", 1, false);
 }
 
 void StabilizerDriver_ReceiveFSM::sendReportStabilizerCapabilitiesAction(QueryStabilizerCapabilities msg, Receive::Body::ReceiveRec transportData)
