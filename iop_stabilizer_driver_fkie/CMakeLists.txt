@@ -8,10 +8,12 @@ project(iop_stabilizer_driver_fkie)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
+             iop_component_fkie
              iop_management_fkie
-             roscpp)
+             roscpp
+             sensor_msgs)
 find_package(Boost REQUIRED COMPONENTS system thread)
-iop_init(COMPONENT_ID 63)
+iop_init(COMPONENT_ID 0)
 
 
 ###################################
@@ -19,7 +21,9 @@ iop_init(COMPONENT_ID 63)
 ###################################
 catkin_package(
     CATKIN_DEPENDS
+        iop_component_fkie
         iop_management_fkie
+        sensor_msgs
     DEPENDS Boost
 )
 
