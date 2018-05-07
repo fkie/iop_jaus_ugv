@@ -2,9 +2,9 @@ services:
   - docker
 language: cpp
 env:
-  global:
-    - CATKIN_LINT=true
-    - CATKIN_LINT_ARGS='--package-path /root/catkin_ws/src/iop_core:/root/catkin_ws/src/iop_msgs'
+#  global:
+#    - CATKIN_LINT=true
+#    - CATKIN_LINT_ARGS='--package-path /root/catkin_ws/src/iop_core:/root/catkin_ws/src/iop_msgs'
 #    - CATKIN_CONFIG='--no-install'
 #    - VERBOSE_OUTPUT=true
   matrix:
