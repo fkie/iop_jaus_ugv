@@ -33,12 +33,12 @@ _illuminations (list_, (Default: [])
 
 #### Publisher:
 
-_illuminator/cmd_`key` (std_msgs::Byte)_
+_illuminator/cmd_`key` (std_msgs::Bool)_
 
 > Command for supported light.
 
 #### Subscriber:
 
-_illuminator/`key` (std_msgs::Byte)_
+_illuminator/`key` (std_msgs::Bool)_
 
 > State for supported light.

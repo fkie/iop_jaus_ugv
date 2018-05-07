@@ -89,8 +89,8 @@ void Illuminator::init(std::string ros_key, bool state, std::string diagnostic_k
 		p_ros_key = ros_key;
 		p_diagnostic_key = diagnostic_key;
 		iop::Config cfg("~Illumination");
-		p_sub_state = cfg.subscribe<std_msgs::Byte>(std::string("illuminator/") + p_ros_key, 10, &Illuminator::p_ros_state_callback, this);
-		p_pub_cmd = cfg.advertise<std_msgs::Byte>(std::string("illuminator/cmd_") + p_ros_key, 10, true);
+		p_sub_state = cfg.subscribe<std_msgs::Bool>(std::string("illuminator/") + p_ros_key, 10, &Illuminator::p_ros_state_callback, this);
+		p_pub_cmd = cfg.advertise<std_msgs::Bool>(std::string("illuminator/cmd_") + p_ros_key, 10, true);
 		p_supported = true;
 	} catch (std::exception &e) {
 		ROS_WARN_NAMED("Illumination", "init of illumination '%s' failed: %s", ros_key.c_str(), e.what());
@@ -113,7 +113,7 @@ bool Illuminator::set_state(bool state)
 	if (is_supported() && p_state != state) {
 		result = true;
 //		p_state = state;
-		std_msgs::Byte msg;
+		std_msgs::Bool msg;
 		msg.data = state;
 		p_pub_cmd.publish(msg);
 		if (p_state) {
@@ -153,7 +153,7 @@ bool Illuminator::operator!=(Illuminator &value)
 	return !(*this == value);
 }
 
-void Illuminator::p_ros_state_callback(const std_msgs::Byte::ConstPtr& state)
+void Illuminator::p_ros_state_callback(const std_msgs::Bool::ConstPtr& state)
 {
 	bool new_state = (bool)state->data;
 	if (is_supported() && p_state != new_state) {
