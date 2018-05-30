@@ -110,9 +110,9 @@ bool Illuminator::get_state()
 bool Illuminator::set_state(bool state)
 {
 	bool result = false;
-	if (is_supported() && p_state != state) {
+	if (is_supported()) {
 		result = true;
-//		p_state = state;
+		p_state = state;
 		std_msgs::Bool msg;
 		msg.data = state;
 		p_pub_cmd.publish(msg);
@@ -156,7 +156,7 @@ bool Illuminator::operator!=(Illuminator &value)
 void Illuminator::p_ros_state_callback(const std_msgs::Bool::ConstPtr& state)
 {
 	bool new_state = (bool)state->data;
-	if (is_supported() && p_state != new_state) {
+	if (is_supported()) {
 		p_state = new_state;
 		if (p_state) {
 			p_state_str = "ON";
