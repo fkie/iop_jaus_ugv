@@ -99,9 +99,10 @@ void StabilizerDriver_ReceiveFSM::setupNotifications()
 		p_joint_velocities[p_joint_names[index]] = 0.;
 		p_joint_positions[p_joint_names[index]] = 0.;
 	}
-	p_sub_jointstates = cfg.subscribe<sensor_msgs::JointState>("joint_states", 1, &StabilizerDriver_ReceiveFSM::pJoinStateCallback, this);
-	p_pub_cmd_jointstates = cfg.advertise<sensor_msgs::JointState>("cmd_joint_states", 1, false);
-	p_pub_cmd_vel = cfg.advertise<std_msgs::Float64MultiArray>("flipper_velocity_controller/command", 1, false);
+	p_sub_jointstates = cfg.subscribe<sensor_msgs::JointState>("joint_states", 2, &StabilizerDriver_ReceiveFSM::pJoinStateCallback, this);
+	p_pub_cmd_jointstates = cfg.advertise<sensor_msgs::JointState>("cmd_joint_states", 2, false);
+        p_pub_cmd_pos = cfg.advertise<std_msgs::Float64MultiArray>("flipper_position_controller/command", 2, false);
+	p_pub_cmd_vel = cfg.advertise<std_msgs::Float64MultiArray>("flipper_velocity_controller/command", 2, false);
 }
 
 void StabilizerDriver_ReceiveFSM::sendReportStabilizerCapabilitiesAction(QueryStabilizerCapabilities msg, Receive::Body::ReceiveRec transportData)
@@ -195,8 +196,13 @@ void StabilizerDriver_ReceiveFSM::setStabilizerPositionAction(SetStabilizerPosit
 {
 	/// Insert User Code HERE
   p_mutex.lock();
+  std_msgs::Float64MultiArray ros_msg_pos;
   sensor_msgs::JointState ros_msg;
   ros_msg.header.stamp = ros::Time::now();
+  // prefill the array for each flipper
+  for (unsigned int index = 0; index < p_joint_names.size(); index++) {
+    ros_msg_pos.data.push_back(0.);
+  }
   for (unsigned int index = 0; index < msg.getBody()->getStabilizerPosition()->getNumberOfElements(); index++) {
     SetStabilizerPosition::Body::StabilizerPosition::StabilizerPositionRec *pos_rec;
     pos_rec = msg.getBody()->getStabilizerPosition()->getElement(index);
@@ -206,9 +212,11 @@ void StabilizerDriver_ReceiveFSM::setStabilizerPositionAction(SetStabilizerPosit
       pos = (int)(pos*100)/100.;
       ros_msg.name.push_back(joint_name);
       ros_msg.position.push_back(pos);
+      ros_msg_pos.data[pos_rec->getStabilizerID()] = pos;
     }
   }
   p_pub_cmd_jointstates.publish(ros_msg);
+  p_pub_cmd_pos.publish(ros_msg_pos);
   p_mutex.unlock();
 }
 
@@ -234,11 +242,11 @@ void StabilizerDriver_ReceiveFSM::stopMotionAction()
 
 bool StabilizerDriver_ReceiveFSM::areReachable(SetStabilizerPosition msg)
 {
-	/// Insert User Code HERE
   for (unsigned int index = 0; index < msg.getBody()->getStabilizerPosition()->getNumberOfElements(); index++) {
     double pos = msg.getBody()->getStabilizerPosition()->getElement(index)->getPosition();
     // TODO: use values from URDF
     if (pos < -1.57079632679 or pos > 1.3962634016) {
+      ROS_WARN_NAMED("StabilizerDriver", "ignored command for not reachable stabilizer %d: %f", index, pos);
       return false;
     }
   }
@@ -254,10 +262,10 @@ bool StabilizerDriver_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec 
 
 bool StabilizerDriver_ReceiveFSM::stabilizersExist(SetStabilizerEffort msg)
 {
-	/// Insert User Code HERE
   for (unsigned int index = 0; index < msg.getBody()->getStabilizerEffort()->getNumberOfElements(); index++) {
     unsigned char sid = msg.getBody()->getStabilizerEffort()->getElement(index)->getStabilizerID();
     if (sid >= p_joint_names.size()) {
+      ROS_WARN_NAMED("StabilizerDriver", "ignored effort command for not existing stabilizer %d: %d", index, (int)sid);
       return false;
     }
   }
@@ -266,10 +274,10 @@ bool StabilizerDriver_ReceiveFSM::stabilizersExist(SetStabilizerEffort msg)
 
 bool StabilizerDriver_ReceiveFSM::stabilizersExist(SetStabilizerPosition msg)
 {
-	/// Insert User Code HERE
   for (unsigned int index = 0; index < msg.getBody()->getStabilizerPosition()->getNumberOfElements(); index++) {
     unsigned char sid = msg.getBody()->getStabilizerPosition()->getElement(index)->getStabilizerID();
     if (sid >= p_joint_names.size()) {
+      ROS_WARN_NAMED("StabilizerDriver", "ignored position command for not existing stabilizer %d: %d", index, (int)sid);
       return false;
     }
   }

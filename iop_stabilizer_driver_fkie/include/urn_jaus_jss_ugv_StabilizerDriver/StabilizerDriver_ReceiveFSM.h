@@ -95,6 +95,7 @@ protected:
 	std::map<std::string, float> p_joint_velocities;
 	ros::Subscriber p_sub_jointstates;
 	ros::Publisher p_pub_cmd_jointstates;
+        ros::Publisher p_pub_cmd_pos;
 	ros::Publisher p_pub_cmd_vel;
 
 	void pJoinStateCallback(const sensor_msgs::JointState::ConstPtr& joint_state);
