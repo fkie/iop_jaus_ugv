@@ -28,6 +28,7 @@ catkin_package(
         diagnostic_msgs
         fkie_iop_accesscontrol
         fkie_iop_component
+        roscpp
         std_msgs
     DEPENDS Boost
 )

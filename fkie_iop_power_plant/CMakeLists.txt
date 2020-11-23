@@ -26,6 +26,7 @@ catkin_package(
     CATKIN_DEPENDS
         fkie_iop_accesscontrol
         fkie_iop_component
+        roscpp
         std_msgs
     DEPENDS Boost
 )
