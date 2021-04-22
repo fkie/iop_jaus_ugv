@@ -1,0 +1,41 @@
+iop_platform_specification:
+  ros__parameters:
+    iop_services:
+      - fkie_iop_discovery/DiscoveryClient
+      - fkie_iop_platform_specification/PlatformSpecificationsService
+    PlatformSpecificationsService:
+      specifics:
+        ackermann:
+          steering_angle_range: 0.0 # [radians] The maximum achievable steering angles, as measured by a virtual wheel at the center of the front axle. Negative values cause the vehicle to turn left; positive values cause the vehicle to turn right.
+          min_turn_radius: 0.0  # [meter] The radius of the smallest turn the vehicle is able to make.
+          wheel_separation: 0.0  # [meter] Distance between the centers of the left and right wheels.
+          drive_wheel_radius: 0.0  # [meter] Radius of the drive wheel (distance from center of the drive shaft to the outer edge of the drive wheel) in meters
+        skidsteer:
+          track_separation: 0.0 # [meter] Distance between the two tracks.
+          drive_wheel_radius: 0.0 # [meter] Radius of the drive wheel (distance from center of the drive shaft to the outer edge of the drive wheel) in meters.
+      inertial:
+        maximum_forward_speed: 0.0  # [meters per second]
+        maximum_reverse_speed: 0.0  # [meters per second]
+        maximum_rotational_speed: 0.0  # [radians per second]
+        maximum_forward_acceleration: 0.0  # [meters per second squared]
+        maximum_reverse_acceleration: 0.0  # [meters per second squared]
+        maximum_forward_deceleration: 0.0  # [meters per second squared]
+        maximum_reverse_deceleration: 0.0  # [meters per second squared]
+      spec:
+        mobility_platform_name: Robot
+        front: 0.0  # [meter]
+        back: 0.0  # [meter]
+        right: 0.0  # [meter]
+        left: 0.0  # [meter]
+        bottom: 0.0  # [meter]
+        top: 0.0  # [meter]
+        xcg: 0.0  # [meter] Measured from the vehicle coordinate frame.
+        ycg: 0.0  # [meter] Measured from the vehicle coordinate frame.
+        zcg: 0.0  # [meter] Measured from the vehicle coordinate frame.
+        wheel_base: 0.0  # [meter] Distance between the center of the frontmost wheel and the center of the rearmost wheel.
+        static_pitch_over: 0.0  # [radians]
+        static_roll_over: 0.0  # [radians]
+        vehicle_weight: 0.0  # [kilogram]
+        approach_angle: 0.0  # [radians] The angle formed by an imaginary line from the bottom of the tires to the center of the vehicle’s underside.
+        departure_angle: 0.0  # [radians] The angle formed by an imaginary line from the bottom of the tires to the center of the vehicle’s underside.
+        break_over_angle: 0.0  # [radians] The angle formed by an imaginary line from the bottom of the tires to the center of the vehicle’s underside.

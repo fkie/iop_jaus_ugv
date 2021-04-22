@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>fkie_iop_platform_specification</name>
+  <version>1.0.0</version>
+  <description>Povides information on the mobility 
+        and geometric characteristics of the platform to IOP.</description>
+
+  <author>Alexander Tiderko</author>
+  <maintainer email="alexander.tiderko@fkie.fraunhofer.de">Alexander Tiderko</maintainer>
+  <license>GPLv2</license>
+  <url type="website">https://github.com/fkie/iop_jaus_ugv</url>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>fkie_iop_events</depend>
+  <depend>std_msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+</package>

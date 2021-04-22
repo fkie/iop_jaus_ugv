@@ -8,8 +8,9 @@ A list with powerplants and their capabilities. Format: ID.POWERPLANT.PARAMETER.
 Currently reports on the status of one battery. It should be configured like:
 
 ```
-    power_plants:
-      - 1.battery.voltage.58
+PowerPlantManager:
+  power_plants:
+    - 1.battery.voltage.58
 ```
 
 

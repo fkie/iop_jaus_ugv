@@ -1,0 +1,5 @@
+<library path="fkie_iop_platform_specification">
+	<class name="PlatformSpecificationsService" type="urn_jaus_jss_ugv_PlatformSpecifications::PlatformSpecificationsServiceService" base_class_type="JTS::Service"
+		id="urn:jaus:jss:ugv:PlatformSpecifications" version="1.0">
+	</class>
+</library>

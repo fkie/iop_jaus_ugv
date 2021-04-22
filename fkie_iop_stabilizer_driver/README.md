@@ -17,7 +17,13 @@ _max_down_angle (double_, (Default: -1.5708)
 
 _joint_names (list_ Default: [])
 
-> Specifies a list with joint names. This is important to get the position of flipper.
+> Specifies a list with joint names. This is important to get the position of flipper, e.g.:
+```
+StabilizerDriver:
+  joint_names:
+    - actuator_0_joint
+    - actuator_1_joint
+```
 
 
 #### Publisher:
