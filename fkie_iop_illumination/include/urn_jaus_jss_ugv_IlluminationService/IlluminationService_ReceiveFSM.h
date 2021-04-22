@@ -16,9 +16,11 @@
 #include "urn_jaus_jss_core_Events/Events_ReceiveFSM.h"
 #include "urn_jaus_jss_core_AccessControl/AccessControl_ReceiveFSM.h"
 
-#include <ros/ros.h>
-#include <fkie_iop_illumination/IlluminatorList.h>
 #include "IlluminationService_ReceiveFSM_sm.h"
+#include <rclcpp/rclcpp.hpp>
+#include <fkie_iop_component/iop_component.hpp>
+#include "fkie_iop_illumination/IlluminatorList.h"
+
 
 namespace urn_jaus_jss_ugv_IlluminationService
 {
@@ -26,11 +28,12 @@ namespace urn_jaus_jss_ugv_IlluminationService
 class DllExport IlluminationService_ReceiveFSM : public JTS::StateMachine
 {
 public:
-	IlluminationService_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM);
+	IlluminationService_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM);
 	virtual ~IlluminationService_ReceiveFSM();
 
 	/// Handle notifications on parent state changes
 	virtual void setupNotifications();
+	virtual void setupIopConfiguration();
 
 	/// Action Methods
 	virtual void sendReportIlluminationConfigurationAction(QueryIlluminationConfiguration msg, Receive::Body::ReceiveRec transportData);
@@ -48,10 +51,13 @@ public:
 
 protected:
 
-    /// References to parent FSMs
-	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
-	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
+	/// References to parent FSMs
 	urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM;
+	urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM;
+	urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM;
+
+	std::shared_ptr<iop::Component> cmp;
+	rclcpp::Logger logger;
 
 	ReportIlluminationState p_ilumination_state;
 	iop::IlluminatorList p_illuminator_list;
@@ -59,6 +65,6 @@ protected:
 	void p_state_callback(urn_jaus_jss_ugv_IlluminationService::ReportIlluminationState report);
 };
 
-};
+}
 
 #endif // ILLUMINATIONSERVICE_RECEIVEFSM_H

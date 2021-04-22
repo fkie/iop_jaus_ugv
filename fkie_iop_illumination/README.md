@@ -7,28 +7,27 @@ Control the lights of a robot.
 
 #### Parameter:
 
-_illuminations (list_, (Default: [])
+> Pairs of {key: value} with supported lights and their states. Keys are:
 
-> A list of {key: value} with supported lights and their states. Keys are:
+- _head_lights_: no
+- _left_turn_signal_: no
+- _right_turn_signal_: no
+- _running_lights_: no
+- _brake_lights_: no
+- _backup_lights_: no
+- _visible_light_source_: no
+- _ir_light_source_: no
+- _variable_light_1_: no
+- _variable_light_2_: no
+- _variable_light_3_: no
+- _variable_light_4_: no
+- _high_beams_: no
+- _parking_lights_: no
+- _fog_lights_: no
+- _hazard_lights_: no
 
-    - head_lights
-    - left_turn_signal
-    - right_turn_signal
-    - running_lights
-    - brake_lights
-    - backup_lights
-    - visible_light_source
-    - ir_light_source
-    - variable_light_1
-    - variable_light_2
-    - variable_light_3
-    - variable_light_4
-    - high_beams
-    - parking_lights
-    - fog_lights
-    - hazard_lights
 
-> Supported states are `ON`, `OFF`, `0` (not supported), `1` (supported - unknown state). For each supported light a publicher for commands and a subscriber for current state are created.
+> Supported states are `ON`, `OFF`, `no` (not supported), `yes` (supported - unknown state). For each supported light a publisher for commands and a subscriber for current state are created.
 
 
 #### Publisher:

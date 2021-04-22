@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>fkie_iop_stabilizer_driver</name>
   <version>1.0.0</version>
   <description>Driver to control flipper of the a robot plattform.</description>
@@ -9,14 +9,16 @@
   <license>GPLv2</license>
   <url type="website">https://github.com/fkie/iop_jaus_ugv</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>fkie_iop_component</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
   <depend>fkie_iop_management</depend>
-  <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
 
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
   <export>
-    <fkie_iop_component plugin="${prefix}/plugin_iop.xml" />
+    <build_type>ament_cmake</build_type>
   </export>
 
 </package>

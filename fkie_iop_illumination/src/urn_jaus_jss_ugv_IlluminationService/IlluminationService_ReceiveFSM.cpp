@@ -1,7 +1,8 @@
 
 
 #include "urn_jaus_jss_ugv_IlluminationService/IlluminationService_ReceiveFSM.h"
-#include <fkie_iop_component/iop_config.h>
+#include <fkie_iop_component/iop_config.hpp>
+
 
 
 
@@ -12,7 +13,8 @@ namespace urn_jaus_jss_ugv_IlluminationService
 
 
 
-IlluminationService_ReceiveFSM::IlluminationService_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM)
+IlluminationService_ReceiveFSM::IlluminationService_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
+: logger(cmp->get_logger().get_child("IlluminationService"))
 {
 
 	/*
@@ -22,9 +24,10 @@ IlluminationService_ReceiveFSM::IlluminationService_ReceiveFSM(urn_jaus_jss_core
 	 */
 	context = new IlluminationService_ReceiveFSMContext(*this);
 
-	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
-	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
 	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
+	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
+	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
+	this->cmp = cmp;
 }
 
 
@@ -44,9 +47,15 @@ void IlluminationService_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready_Controlled", "IlluminationService_ReceiveFSM");
 	registerNotification("Receiving_Ready", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving_Ready", "IlluminationService_ReceiveFSM");
 	registerNotification("Receiving", pAccessControl_ReceiveFSM->getHandler(), "InternalStateChange_To_AccessControl_ReceiveFSM_Receiving", "IlluminationService_ReceiveFSM");
+}
+
+
+void IlluminationService_ReceiveFSM::setupIopConfiguration()
+{
+	iop::Config cfg(cmp, "IlluminationService");
 	pEvents_ReceiveFSM->get_event_handler().register_query(QueryIlluminationState::ID);
 	// iop::Config cfg("~Illumination");
-	p_illuminator_list.init();
+	p_illuminator_list.init(cmp);
 	p_illuminator_list.set_state_callback(&IlluminationService_ReceiveFSM::p_state_callback, this);
 	p_ilumination_state = p_illuminator_list.get_state_report();
 	pEvents_ReceiveFSM->get_event_handler().set_report(QueryIlluminationState::ID, &p_ilumination_state);
@@ -56,7 +65,7 @@ void IlluminationService_ReceiveFSM::sendReportIlluminationConfigurationAction(Q
 {
 	ReportIlluminationConfiguration ilumination_cfg = p_illuminator_list.get_configuration_report();
 	JausAddress sender = transportData.getAddress();
-	ROS_DEBUG_NAMED("Illumination", "send ReportIlluminationConfiguration to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger,  "send ReportIlluminationConfiguration to %s", sender.str().c_str());
 	sendJausMessage(ilumination_cfg, transportData.getAddress());
 }
 
@@ -64,13 +73,13 @@ void IlluminationService_ReceiveFSM::sendReportIlluminationStateAction(QueryIllu
 {
 	ReportIlluminationState ilumination_state = p_illuminator_list.get_state_report();
 	JausAddress sender = transportData.getAddress();
-	ROS_DEBUG_NAMED("Illumination", "send ReportIlluminationState to %s", sender.str().c_str());
+	RCLCPP_DEBUG(logger,  "send ReportIlluminationState to %s", sender.str().c_str());
 	sendJausMessage(ilumination_state, transportData.getAddress());
 }
 
 void IlluminationService_ReceiveFSM::setIlluminationStateAction(SetIlluminationState msg)
 {
-	ROS_DEBUG_NAMED("Illumination", "SetIlluminationState");
+	RCLCPP_DEBUG(logger,  "SetIlluminationState");
 	p_illuminator_list.set_state(*msg.getBody()->getIlluminationRec()->getIllumination());
 }
 
@@ -94,4 +103,4 @@ void IlluminationService_ReceiveFSM::p_state_callback(urn_jaus_jss_ugv_Illuminat
 	pEvents_ReceiveFSM->get_event_handler().set_report(QueryIlluminationState::ID, &p_ilumination_state);
 }
 
-};
+}

@@ -1,0 +1,11 @@
+iop_stabilizer_driver:
+  ros__parameters:
+    iop_services:
+      - fkie_iop_discovery/DiscoveryClient
+      - fkie_iop_stabilizer_driver/StabilizerDriver
+    StabilizerDriver:
+      joint_names:
+        - actuator_0_joint
+        - actuator_1_joint
+        - actuator_2_joint
+        - actuator_3_joint

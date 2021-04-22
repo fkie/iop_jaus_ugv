@@ -22,25 +22,43 @@ along with this program; or you can read the full license at
 
 
 #include <fkie_iop_illumination/IlluminatorList.h>
-#include <fkie_iop_component/iop_config.h>
+#include <fkie_iop_component/iop_config.hpp>
 
 using namespace iop;
 
+void parse_illuminator_def(std::string& value, bool& supported, bool& state)
+{
+	supported = false;
+	state = false;
+	if (value.compare("no") == 0) {
+		return;
+	}
+	if (value.compare("yes") == 0) {
+		supported = true;
+		state = false;
+		return;
+	}
+	if (value.compare("OFF") == 0) {
+		supported = true;
+		state = false;
+		return;
+	}
+	if (value.compare("ON") == 0) {
+		supported = true;
+		state = true;
+		return;
+	}
+}
 
 IlluminatorList::IlluminatorList()
 {
 	p_initialized = false;
 }
 
-void IlluminatorList::init()
+void IlluminatorList::init(std::shared_ptr<iop::Component> cmp)
 {
-	iop::Config cfg("~Illumination");
-	XmlRpc::XmlRpcValue illuminations;
-	cfg.param("illuminations", illuminations, illuminations);
-	if (!illuminations.valid()) {
-		ROS_ERROR("wrong '~illuminations' format, expected list of ROS_KEY: STATE{ON, OFF, 0, 1} or [STATE{ON, OFF, 0, 1}, DIAGNOSTIC_KEY]");
-		ROS_BREAK();
-	}
+	iop::Config cfg(cmp, "IlluminatorList");
+	auto logger = cmp->get_logger().get_child("IlluminatorList");
 	lock_type lock(p_mutex);
 	p_illuminator_map.clear();
 	p_illuminator_map["Headlights"] = new Illuminator();
@@ -60,63 +78,127 @@ void IlluminatorList::init()
 	p_illuminator_map["FogLights"] = new Illuminator();
 	p_illuminator_map["HazardLights"] = new Illuminator();
 
-	// parse the parameter
-	for(int i = 0; i < illuminations.size(); i++) {
-		if (illuminations[i].getType() == XmlRpc::XmlRpcValue::TypeStruct) {
-			for(XmlRpc::XmlRpcValue::ValueStruct::iterator iterator = illuminations[i].begin(); iterator != illuminations[i].end(); iterator++) {
-				std::string il_ros_type = iterator->first;
-				bool supported = false;
-				bool state = false;
-				std::string il_diag_type = "";
-				XmlRpc::XmlRpcValue il_state_struct = iterator->second;
-				if (il_state_struct.valid()) {
-					if (il_state_struct.getType() == XmlRpc::XmlRpcValue::TypeArray) {
-						if (il_state_struct.size() > 0) {
-							if (il_state_struct[0].getType() == XmlRpc::XmlRpcValue::TypeString) {
-								supported = true;
-								std::string normstr = il_state_struct[0];
-								std::transform(normstr.begin(), normstr.end(), normstr.begin(), ::tolower);
-								state = normstr.compare("on") == 0;
-							} else if (il_state_struct[0].getType() == XmlRpc::XmlRpcValue::TypeInt) {
-								supported = (int)il_state_struct[0] > 0;
-							} else if (il_state_struct[0].getType() == XmlRpc::XmlRpcValue::TypeBoolean) {
-								supported = true;
-								state = (bool)il_state_struct[0];
-							}
-						}
-						if (il_state_struct.size() > 1) {
-							il_diag_type = std::string(il_state_struct[1]);
-						}
-					} else if (il_state_struct.getType() == XmlRpc::XmlRpcValue::TypeString) {
-						supported = true;
-						std::string normstr = il_state_struct;
-						std::transform(normstr.begin(), normstr.end(), normstr.begin(), ::tolower);
-						state = normstr.compare("on") == 0;
-					} else if (il_state_struct.getType() == XmlRpc::XmlRpcValue::TypeInt) {
-						supported = (int)il_state_struct > 0;
-					} else if (il_state_struct.getType() == XmlRpc::XmlRpcValue::TypeBoolean) {
-						supported = true;
-						state = (bool)il_state_struct;
-					}
-				} else {
-					ROS_WARN("invalid value for illumination key '%s', ignored!", il_ros_type.c_str());
-				}
-				// add supported key
-				if (supported) {
-					try {
-						std::string il_iop_type = Illuminator::get_iop_key(il_ros_type);
-						iop::Illuminator* illuminator = p_illuminator_map[il_iop_type];
-						illuminator->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
-						illuminator->init(il_ros_type, state, il_diag_type);
-					} catch (std::exception &e) {
-						ROS_WARN("invalid key value for illumination '%s', ignored!", il_ros_type.c_str());
-					}
-				}
-			}
-		} else {
-			ROS_ERROR("wrong entry of '~illuminations', expected list of ROS_KEY: STATE{ON, OFF, 0, 1} or [STATE{ON, OFF, 0, 1}, DIAGNOSTIC_KEY]");
-		}
-	}
+	std::string value = "no";
+	cfg.declare_param<std::string>("head_lights", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"Headlights", "Default: no");
+	cfg.declare_param<std::string>("left_turn_signal", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"LeftTurnSignal", "Default: no");
+	cfg.declare_param<std::string>("right_turn_signal", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"RightTurnSignal", "Default: no");
+	cfg.declare_param<std::string>("running_lights", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"RunningLights", "Default: no");
+	cfg.declare_param<std::string>("brake_lights", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"BrakeLights", "Default: no");
+	cfg.declare_param<std::string>("backup_lights", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"BackupLights", "Default: no");
+	cfg.declare_param<std::string>("visible_light_source", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"VisibleLightSource", "Default: no");
+	cfg.declare_param<std::string>("ir_light_source", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"IRLightSource", "Default: no");
+	cfg.declare_param<std::string>("variable_light_1", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"VariableLight1", "Default: no");
+	cfg.declare_param<std::string>("variable_light_2", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"VariableLight2", "Default: no");
+	cfg.declare_param<std::string>("variable_light_3", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"VariableLight3", "Default: no");
+	cfg.declare_param<std::string>("variable_light_4", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"VariableLight4", "Default: no");
+	cfg.declare_param<std::string>("high_beams", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"HighBeams", "Default: no");
+	cfg.declare_param<std::string>("parking_lights", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"ParkingLights", "Default: no");
+	cfg.declare_param<std::string>("fog_lights", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"FogLights", "Default: no");
+	cfg.declare_param<std::string>("hazard_lights", value, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+		"HazardLights", "Default: no");
+
+	value = "no";
+	bool supported = false;
+	bool state = false;
+	cfg.param<std::string>("head_lights", value, value);
+	cfg.param<std::string>("left_turn_signal", value, value);
+	cfg.param<std::string>("right_turn_signal", value, value);
+	cfg.param<std::string>("running_lights", value, value);
+	cfg.param<std::string>("brake_lights", value, value);
+	cfg.param<std::string>("backup_lights", value, value);
+	cfg.param<std::string>("visible_light_source", value, value);
+	cfg.param<std::string>("ir_light_source", value, value);
+	cfg.param<std::string>("variable_light_1", value, value);
+	cfg.param<std::string>("variable_light_2", value, value);
+	cfg.param<std::string>("variable_light_3", value, value);
+	cfg.param<std::string>("variable_light_4", value, value);
+	cfg.param<std::string>("high_beams", value, value);
+	cfg.param<std::string>("parking_lights", value, value);
+	cfg.param<std::string>("fog_lights", value, value);
+	cfg.param<std::string>("hazard_lights", value, value);
+
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["Headlights"]->init(cmp, "head_lights", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["LeftTurnSignal"]->init(cmp, "left_turn_signal", state, "LeftTurnSignal");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["RightTurnSignal"]->init(cmp, "right_turn_signal", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["RunningLights"]->init(cmp, "running_lights", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["BrakeLights"]->init(cmp, "brake_lights", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["BackupLights"]->init(cmp, "backup_lights", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["VisibleLightSource"]->init(cmp, "visible_light_source", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["IRLightSource"]->init(cmp, "ir_light_source", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["VariableLight1"]->init(cmp, "variable_light_1", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["VariableLight2"]->init(cmp, "variable_light_2", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["VariableLight3"]->init(cmp, "variable_light_3", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["VariableLight4"]->init(cmp, "variable_light_4", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["HighBeams"]->init(cmp, "high_beams", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["ParkingLights"]->init(cmp, "parking_lights", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["FogLights"]->init(cmp, "fog_lights", state, "Headlights");
+	parse_illuminator_def(value, supported, state);
+	if (supported) p_illuminator_map["HazardLights"]->init(cmp, "hazard_lights", state, "Headlights");
+	
+	// set callback after all states are set
+	p_illuminator_map["Headlights"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["LeftTurnSignal"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["RightTurnSignal"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["RunningLights"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["BrakeLights"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["BackupLights"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["VisibleLightSource"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["IRLightSource"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["VariableLight1"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["VariableLight2"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["VariableLight3"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["VariableLight4"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["HighBeams"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["ParkingLights"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["FogLights"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+	p_illuminator_map["HazardLights"]->set_state_callback(&IlluminatorList::p_illuminator_state_callback, this);
+
 	p_initialized = true;
 }
 
@@ -207,7 +289,7 @@ void IlluminatorList::set_state(urn_jaus_jss_ugv_IlluminationService::SetIllumin
 	}
 }
 
-void IlluminatorList::p_illuminator_state_callback(std::string iop_key, bool state)
+void IlluminatorList::p_illuminator_state_callback(std::string /* iop_key */, bool /* state */)
 {
 	lock_type lock(p_mutex);
 	if (p_state_callback) {
@@ -215,10 +297,10 @@ void IlluminatorList::p_illuminator_state_callback(std::string iop_key, bool sta
 	}
 }
 
-void IlluminatorList::p_ros_diagnostic_callback(const diagnostic_msgs::DiagnosticStatus::ConstPtr& state)
-{
-	//TODO: update current state
-}
+// void IlluminatorList::p_ros_diagnostic_callback(const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr state)
+// {
+// 	//TODO: update current state
+// }
 
 jUnsignedInteger IlluminatorList::p_get_illuminator_state(std::string iop_key)
 {

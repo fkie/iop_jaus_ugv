@@ -1,10 +1,5 @@
-<library path="libfkie_iop_illumination">
-  <class name="Illumination" type="iop::IlluminationPlugin" base_class_type="iop::PluginInterface">
-    <description>
-      Illumination Service Plugin
-    </description>
-    <iop_service name="Illumination" id="urn:jaus:jss:ugv:IlluminationService" version="1.1">
-      <inherits_from id="urn:jaus:jss:core:AccessControl" min_version="1.1"/>
-    </iop_service>
-  </class>
+<library path="fkie_iop_illumination">
+	<class name="IlluminationService" type="urn_jaus_jss_ugv_IlluminationService::IlluminationServiceService" base_class_type="JTS::Service"
+		id="urn:jaus:jss:ugv:IlluminationService" version="1.0">
+	</class>
 </library>

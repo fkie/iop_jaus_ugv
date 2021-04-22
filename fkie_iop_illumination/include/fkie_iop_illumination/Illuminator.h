@@ -25,10 +25,9 @@ along with this program; or you can read the full license at
 #define ILLUMINATOR_H
 
 
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-#include <ros/ros.h>
-#include <std_msgs/Bool.h>
+#include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <fkie_iop_component/iop_component.hpp>
 
 namespace iop
 {
@@ -41,11 +40,11 @@ public:
 
 	Illuminator();
 
-	void init(std::string ros_key, std::string state, std::string diagnostic_key="");
-	void init(std::string ros_key, bool state, std::string diagnostic_key="");
+	void init(std::shared_ptr<iop::Component> cmp, std::string ros_key, std::string state, std::string diagnostic_key="");
+	void init(std::shared_ptr<iop::Component> cmp, std::string ros_key, bool state, std::string diagnostic_key="");
 	template<class T>
 	void set_state_callback(void(T::*handler)(std::string iop_key, bool state), T*obj) {
-		p_state_callback = boost::bind(handler, obj, _1, _2);
+		p_state_callback = std::bind(handler, obj, std::placeholders::_1, std::placeholders::_2);
 	}
 	void set_state_callback();
 	bool is_valid();
@@ -66,14 +65,14 @@ protected:
 	bool p_supported;
 	bool p_state;
 	std::string p_state_str;
-	ros::Subscriber p_sub_state;
-	ros::Publisher p_pub_cmd;
-	boost::function<void (std::string iop_key, bool state)> p_state_callback;
+	rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr p_sub_state;
+	rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr p_pub_cmd;
+	std::function<void (std::string iop_key, bool state)> p_state_callback;
 
-	void p_ros_state_callback(const std_msgs::Bool::ConstPtr& state);
-
-};
+	void p_ros_state_callback(const std_msgs::msg::Bool::SharedPtr state);
 
 };
+
+}
 
 #endif

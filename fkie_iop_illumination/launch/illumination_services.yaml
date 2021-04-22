@@ -1,0 +1,23 @@
+iop_illumination:
+  ros__parameters:
+    iop_services:
+      - fkie_iop_discovery/DiscoveryClient
+      - fkie_iop_illumination/IlluminationService
+    IlluminationService:
+      head_lights: OFF
+      left_turn_signal: no
+      right_turn_signal: no
+      running_lights: ON
+      brake_lights: yes
+      backup_lights: no
+      visible_light_source: no
+      ir_light_source: no
+      variable_light_1: no
+      variable_light_2: no
+      variable_light_3: no
+      variable_light_4: no
+      high_beams: no
+      parking_lights: no
+      fog_lights: no
+      hazard_lights: no
+

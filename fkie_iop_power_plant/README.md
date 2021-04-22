@@ -3,13 +3,13 @@ This package is part of [ROS/IOP Bridge](https://github.com/fkie/iop_core/blob/m
 
 ## fkie_iop_power_plant:_ PowerPlantManager
 
+A list with powerplants and their capabilities. Format: ID.POWERPLANT.PARAMETER.VALUE
+
 Currently reports on the status of one battery. It should be configured like:
 
 ```
     power_plants:
-      - "1":
-        - battery:
-          - voltage: 58
+      - 1.battery.voltage.58
 ```
 
 

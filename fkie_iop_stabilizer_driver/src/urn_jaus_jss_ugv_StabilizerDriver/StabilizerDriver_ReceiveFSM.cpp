@@ -10,7 +10,7 @@ holder.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
@@ -22,7 +22,7 @@ along with this program; or you can read the full license at
 
 
 #include "urn_jaus_jss_ugv_StabilizerDriver/StabilizerDriver_ReceiveFSM.h"
-#include <fkie_iop_component/iop_config.h>
+#include <fkie_iop_component/iop_config.hpp>
 
 
 
@@ -33,7 +33,8 @@ namespace urn_jaus_jss_ugv_StabilizerDriver
 
 
 
-StabilizerDriver_ReceiveFSM::StabilizerDriver_ReceiveFSM(urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Management::Management_ReceiveFSM* pManagement_ReceiveFSM)
+StabilizerDriver_ReceiveFSM::StabilizerDriver_ReceiveFSM(std::shared_ptr<iop::Component> cmp, urn_jaus_jss_core_Management::Management_ReceiveFSM* pManagement_ReceiveFSM, urn_jaus_jss_core_AccessControl::AccessControl_ReceiveFSM* pAccessControl_ReceiveFSM, urn_jaus_jss_core_Events::Events_ReceiveFSM* pEvents_ReceiveFSM, urn_jaus_jss_core_Transport::Transport_ReceiveFSM* pTransport_ReceiveFSM)
+: logger(cmp->get_logger().get_child("StabilizerDriver"))
 {
 
 	/*
@@ -43,10 +44,11 @@ StabilizerDriver_ReceiveFSM::StabilizerDriver_ReceiveFSM(urn_jaus_jss_core_Trans
 	 */
 	context = new StabilizerDriver_ReceiveFSMContext(*this);
 
-	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
-	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
-	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
 	this->pManagement_ReceiveFSM = pManagement_ReceiveFSM;
+	this->pAccessControl_ReceiveFSM = pAccessControl_ReceiveFSM;
+	this->pEvents_ReceiveFSM = pEvents_ReceiveFSM;
+	this->pTransport_ReceiveFSM = pTransport_ReceiveFSM;
+	this->cmp = cmp;
 	max_up_angle = 1.5708;
 	max_down_angle = -1.5708;
 }
@@ -84,70 +86,84 @@ void StabilizerDriver_ReceiveFSM::setupNotifications()
 	registerNotification("Receiving_Ready_Controlled", pManagement_ReceiveFSM->getHandler(), "InternalStateChange_To_Management_ReceiveFSM_Receiving_Ready_Controlled", "StabilizerDriver_ReceiveFSM");
 	registerNotification("Receiving_Ready", pManagement_ReceiveFSM->getHandler(), "InternalStateChange_To_Management_ReceiveFSM_Receiving_Ready", "StabilizerDriver_ReceiveFSM");
 	registerNotification("Receiving", pManagement_ReceiveFSM->getHandler(), "InternalStateChange_To_Management_ReceiveFSM_Receiving", "StabilizerDriver_ReceiveFSM");
+
+}
+
+
+void StabilizerDriver_ReceiveFSM::setupIopConfiguration()
+{
+	iop::Config cfg(cmp, "StabilizerDriver");
 	pEvents_ReceiveFSM->get_event_handler().register_query(QueryStabilizerPosition::ID);
-	iop::Config cfg("~StabilizerDriver");
+	cfg.declare_param<double>("max_up_angle", max_up_angle, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE,
+		"The maximum supported angle for _all_ flipper. This value is only used for capabilities report.",
+		"Default: 1.5708");
+	cfg.declare_param<double>("max_down_angle", max_down_angle, true,
+		rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE,
+		"The minimum supported angle for _all_ flipper. This value is only used for capabilities report.",
+		"Default: -1.5708");
+	cfg.declare_param<std::vector<std::string> >("joint_names", p_joint_names, false,
+		rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
+		"Specifies a list with joint names. This is important to get the position of flipper.",
+		"Default: []");
 	cfg.param("max_up_angle", max_up_angle, max_up_angle);
 	cfg.param("max_down_angle", max_down_angle, max_down_angle);
-	XmlRpc::XmlRpcValue v;
-	cfg.param("joint_names", v, v);
-	for(unsigned int i = 0; i < v.size(); i++) {
-		p_joint_names.push_back(v[i]);
-	}
+	cfg.param_vector<std::vector<std::string> >("joint_names", p_joint_names, p_joint_names);
 	// TODO: get limits and positions of each flipper from URDF
-	//   integrate into iop_manipulator_core_fkie::ManipulatorUrdfReader
+	//	 integrate into iop_manipulator_core_fkie::ManipulatorUrdfReader
 	for (unsigned int index = 0; index < p_joint_names.size(); index++) {
 		p_joint_velocities[p_joint_names[index]] = 0.;
 		p_joint_positions[p_joint_names[index]] = 0.;
 	}
-	p_sub_jointstates = cfg.subscribe<sensor_msgs::JointState>("joint_states", 2, &StabilizerDriver_ReceiveFSM::pJoinStateCallback, this);
-	p_pub_cmd_jointstates = cfg.advertise<sensor_msgs::JointState>("cmd_joint_states", 2, false);
-        p_pub_cmd_pos = cfg.advertise<std_msgs::Float64MultiArray>("flipper_position_controller/command", 2, false);
-	p_pub_cmd_vel = cfg.advertise<std_msgs::Float64MultiArray>("flipper_velocity_controller/command", 2, false);
+	p_sub_jointstates = cfg.create_subscription<sensor_msgs::msg::JointState>("joint_states", 2, std::bind(&StabilizerDriver_ReceiveFSM::pJoinStateCallback, this, std::placeholders::_1));
+	p_pub_cmd_jointstates = cfg.create_publisher<sensor_msgs::msg::JointState>("cmd_joint_states", 2);
+	p_pub_cmd_pos = cfg.create_publisher<std_msgs::msg::Float64MultiArray>("flipper_position_controller/command", 2);
+	p_pub_cmd_vel = cfg.create_publisher<std_msgs::msg::Float64MultiArray>("flipper_velocity_controller/command", 2);
 }
 
 void StabilizerDriver_ReceiveFSM::sendReportStabilizerCapabilitiesAction(QueryStabilizerCapabilities msg, Receive::Body::ReceiveRec transportData)
 {
 	/// Insert User Code HERE
-  uint16_t subsystem_id = transportData.getSrcSubsystemID();
-  uint8_t node_id = transportData.getSrcNodeID();
-  uint8_t component_id = transportData.getSrcComponentID();
-  JausAddress sender(subsystem_id, node_id, component_id);
-  ROS_DEBUG_NAMED("StabilizerDriver", "sendReportStabilizerCapabilitiesAction to %d.%d.%d",
-                  subsystem_id, node_id, component_id);
-  p_mutex.lock();
-  ReportStabilizerCapabilities response;
-  for (unsigned int index = 0; index < p_joint_names.size(); index++) {
-    ReportStabilizerCapabilities::Body::StabilizerCapabilities::StabilizerCapabilitiesSeq flipper;
-    flipper.getStabilizerCapabilitiesRec()->setStabilizerID(index);
-    // TODO: set values from URDF
-    flipper.getStabilizerCapabilitiesRec()->setMaximumUpAngle(max_up_angle);
-    flipper.getStabilizerCapabilitiesRec()->setMaximumDownAngle(max_down_angle);
-    response.getBody()->getStabilizerCapabilities()->addElement(flipper);
-  }
-  sendJausMessage(response, sender);
-  p_mutex.unlock();
+	uint16_t subsystem_id = transportData.getSrcSubsystemID();
+	uint8_t node_id = transportData.getSrcNodeID();
+	uint8_t component_id = transportData.getSrcComponentID();
+	JausAddress sender(subsystem_id, node_id, component_id);
+	RCLCPP_DEBUG(logger,	"sendReportStabilizerCapabilitiesAction to %d.%d.%d",
+									subsystem_id, node_id, component_id);
+	p_mutex.lock();
+	ReportStabilizerCapabilities response;
+	for (unsigned int index = 0; index < p_joint_names.size(); index++) {
+		ReportStabilizerCapabilities::Body::StabilizerCapabilities::StabilizerCapabilitiesSeq flipper;
+		flipper.getStabilizerCapabilitiesRec()->setStabilizerID(index);
+		// TODO: set values from URDF
+		flipper.getStabilizerCapabilitiesRec()->setMaximumUpAngle(max_up_angle);
+		flipper.getStabilizerCapabilitiesRec()->setMaximumDownAngle(max_down_angle);
+		response.getBody()->getStabilizerCapabilities()->addElement(flipper);
+	}
+	sendJausMessage(response, sender);
+	p_mutex.unlock();
 }
 
 void StabilizerDriver_ReceiveFSM::sendReportStabilizerEffortAction(QueryStabilizerEffort msg, Receive::Body::ReceiveRec transportData)
 {
 	/// Insert User Code HERE
-  uint16_t subsystem_id = transportData.getSrcSubsystemID();
-  uint8_t node_id = transportData.getSrcNodeID();
-  uint8_t component_id = transportData.getSrcComponentID();
-  JausAddress sender(subsystem_id, node_id, component_id);
-  ROS_DEBUG_NAMED("StabilizerDriver", "sendReportStabilizerEffortAction to %d.%d.%d", subsystem_id, node_id, component_id);
+	uint16_t subsystem_id = transportData.getSrcSubsystemID();
+	uint8_t node_id = transportData.getSrcNodeID();
+	uint8_t component_id = transportData.getSrcComponentID();
+	JausAddress sender(subsystem_id, node_id, component_id);
+	RCLCPP_DEBUG(logger,	"sendReportStabilizerEffortAction to %d.%d.%d", subsystem_id, node_id, component_id);
 
-  p_mutex.lock();
-  ReportStabilizerEffort response;
-  std::map<std::string, float>::iterator it_ps;
-  for (unsigned int index = 0; index < p_joint_names.size(); index++) {
-    ReportStabilizerEffort::Body::StabilizerEffort::StabilizerEffortRec flipper_effort;
-    flipper_effort.setEffort(p_joint_velocities[p_joint_names[index]]);
-    flipper_effort.setStabilizerID(index);
-    response.getBody()->getStabilizerEffort()->addElement(flipper_effort);
-  }
-  this->sendJausMessage(response, sender);
-  p_mutex.unlock();
+	p_mutex.lock();
+	ReportStabilizerEffort response;
+	std::map<std::string, float>::iterator it_ps;
+	for (unsigned int index = 0; index < p_joint_names.size(); index++) {
+		ReportStabilizerEffort::Body::StabilizerEffort::StabilizerEffortRec flipper_effort;
+		flipper_effort.setEffort(p_joint_velocities[p_joint_names[index]]);
+		flipper_effort.setStabilizerID(index);
+		response.getBody()->getStabilizerEffort()->addElement(flipper_effort);
+	}
+	this->sendJausMessage(response, sender);
+	p_mutex.unlock();
 }
 
 void StabilizerDriver_ReceiveFSM::sendReportStabilizerPositionAction(QueryStabilizerPosition msg, Receive::Body::ReceiveRec transportData)
@@ -157,100 +173,96 @@ void StabilizerDriver_ReceiveFSM::sendReportStabilizerPositionAction(QueryStabil
 	uint8_t node_id = transportData.getSrcNodeID();
 	uint8_t component_id = transportData.getSrcComponentID();
 	JausAddress sender(subsystem_id, node_id, component_id);
-	ROS_DEBUG_NAMED("StabilizerDriver", "sendReportStabilizerPositionAction to %d.%d.%d", subsystem_id, node_id, component_id);
+	RCLCPP_DEBUG(logger,	"sendReportStabilizerPositionAction to %d.%d.%d", subsystem_id, node_id, component_id);
 
-	p_mutex.lock();
+	lock_type lock(p_mutex);
 	this->sendJausMessage(p_stabilizer_position_report, sender);
-	p_mutex.unlock();
 }
 
 void StabilizerDriver_ReceiveFSM::setStabilizerEffortAction(SetStabilizerEffort msg)
 {
 	/// Insert User Code HERE
-  p_mutex.lock();
-  sensor_msgs::JointState ros_msg;
-  ros_msg.header.stamp = ros::Time::now();
-  std_msgs::Float64MultiArray ros_msg_vel;
-  // prefill the array for each flipper
-  for (unsigned int index = 0; index < p_joint_names.size(); index++) {
-    ros_msg_vel.data.push_back(0.);
-  }
-  for (unsigned int index = 0; index < msg.getBody()->getStabilizerEffort()->getNumberOfElements(); index++) {
-    SetStabilizerEffort::Body::StabilizerEffort::StabilizerEffortRec *effort_rec;
-    effort_rec = msg.getBody()->getStabilizerEffort()->getElement(index);
-    if (effort_rec->getStabilizerID() < p_joint_names.size()) {
-      std::string joint_name = p_joint_names[effort_rec->getStabilizerID()];
-      double vel = effort_rec->getEffort();
-      double vel_ok = (int)(vel*100)/100.;
-      ros_msg.name.push_back(joint_name);
-      ros_msg.velocity.push_back(vel_ok);
-      ros_msg_vel.data[effort_rec->getStabilizerID()] = vel_ok;
-    }
-  }
-  p_pub_cmd_jointstates.publish(ros_msg);
-  p_pub_cmd_vel.publish(ros_msg_vel);
-  p_mutex.unlock();
+	lock_type lock(p_mutex);
+	auto ros_msg = sensor_msgs::msg::JointState();
+	ros_msg.header.stamp = cmp->now();
+	auto ros_msg_vel = std_msgs::msg::Float64MultiArray();
+	// prefill the array for each flipper
+	for (unsigned int index = 0; index < p_joint_names.size(); index++) {
+		ros_msg_vel.data.push_back(0.);
+	}
+	for (unsigned int index = 0; index < msg.getBody()->getStabilizerEffort()->getNumberOfElements(); index++) {
+		SetStabilizerEffort::Body::StabilizerEffort::StabilizerEffortRec *effort_rec;
+		effort_rec = msg.getBody()->getStabilizerEffort()->getElement(index);
+		if (effort_rec->getStabilizerID() < p_joint_names.size()) {
+			std::string joint_name = p_joint_names[effort_rec->getStabilizerID()];
+			double vel = effort_rec->getEffort();
+			double vel_ok = (int)(vel*100)/100.;
+			ros_msg.name.push_back(joint_name);
+			ros_msg.velocity.push_back(vel_ok);
+			ros_msg_vel.data[effort_rec->getStabilizerID()] = vel_ok;
+		}
+	}
+	p_pub_cmd_jointstates->publish(ros_msg);
+	p_pub_cmd_vel->publish(ros_msg_vel);
 }
 
 void StabilizerDriver_ReceiveFSM::setStabilizerPositionAction(SetStabilizerPosition msg)
 {
 	/// Insert User Code HERE
-  p_mutex.lock();
-  std_msgs::Float64MultiArray ros_msg_pos;
-  sensor_msgs::JointState ros_msg;
-  ros_msg.header.stamp = ros::Time::now();
-  // prefill the array for each flipper
-  for (unsigned int index = 0; index < p_joint_names.size(); index++) {
-    ros_msg_pos.data.push_back(0.);
-  }
-  for (unsigned int index = 0; index < msg.getBody()->getStabilizerPosition()->getNumberOfElements(); index++) {
-    SetStabilizerPosition::Body::StabilizerPosition::StabilizerPositionRec *pos_rec;
-    pos_rec = msg.getBody()->getStabilizerPosition()->getElement(index);
-    if (pos_rec->getStabilizerID() < p_joint_names.size()) {
-      std::string joint_name = p_joint_names[pos_rec->getStabilizerID()];
-      double pos = pos_rec->getPosition();
-      pos = (int)(pos*100)/100.;
-      ros_msg.name.push_back(joint_name);
-      ros_msg.position.push_back(pos);
-      ros_msg_pos.data[pos_rec->getStabilizerID()] = pos;
-    }
-  }
-  p_pub_cmd_jointstates.publish(ros_msg);
-  p_pub_cmd_pos.publish(ros_msg_pos);
-  p_mutex.unlock();
+	lock_type lock(p_mutex);
+	auto ros_msg_pos = std_msgs::msg::Float64MultiArray();
+	auto ros_msg = sensor_msgs::msg::JointState();
+	ros_msg.header.stamp = cmp->now();
+	// prefill the array for each flipper
+	for (unsigned int index = 0; index < p_joint_names.size(); index++) {
+		ros_msg_pos.data.push_back(0.);
+	}
+	for (unsigned int index = 0; index < msg.getBody()->getStabilizerPosition()->getNumberOfElements(); index++) {
+		SetStabilizerPosition::Body::StabilizerPosition::StabilizerPositionRec *pos_rec;
+		pos_rec = msg.getBody()->getStabilizerPosition()->getElement(index);
+		if (pos_rec->getStabilizerID() < p_joint_names.size()) {
+			std::string joint_name = p_joint_names[pos_rec->getStabilizerID()];
+			double pos = pos_rec->getPosition();
+			pos = (int)(pos*100)/100.;
+			ros_msg.name.push_back(joint_name);
+			ros_msg.position.push_back(pos);
+			ros_msg_pos.data[pos_rec->getStabilizerID()] = pos;
+		}
+	}
+	p_pub_cmd_jointstates->publish(ros_msg);
+	p_pub_cmd_pos->publish(ros_msg_pos);
 }
 
 void StabilizerDriver_ReceiveFSM::stopMotionAction()
 {
 	/// Insert User Code HERE
-  p_mutex.lock();
-  sensor_msgs::JointState ros_msg;
-  ros_msg.header.stamp = ros::Time::now();
-  std_msgs::Float64MultiArray ros_msg_vel;
-  for (unsigned int index = 0; index < p_joint_names.size(); index++) {
-    std::string joint_name = p_joint_names[index];
-    ros_msg.name.push_back(joint_name);
-    ros_msg.velocity.push_back(0.);
-    ros_msg_vel.data.push_back(0.);
-  }
-  p_pub_cmd_jointstates.publish(ros_msg);
-  p_pub_cmd_vel.publish(ros_msg_vel);
-  p_mutex.unlock();
+	lock_type lock(p_mutex);
+	auto ros_msg = sensor_msgs::msg::JointState();
+	ros_msg.header.stamp = cmp->now();
+	auto ros_msg_vel = std_msgs::msg::Float64MultiArray();
+	for (unsigned int index = 0; index < p_joint_names.size(); index++) {
+		std::string joint_name = p_joint_names[index];
+		ros_msg.name.push_back(joint_name);
+		ros_msg.velocity.push_back(0.);
+		ros_msg_vel.data.push_back(0.);
+	}
+	p_pub_cmd_jointstates->publish(ros_msg);
+	p_pub_cmd_vel->publish(ros_msg_vel);
 }
 
 
 
 bool StabilizerDriver_ReceiveFSM::areReachable(SetStabilizerPosition msg)
 {
-  for (unsigned int index = 0; index < msg.getBody()->getStabilizerPosition()->getNumberOfElements(); index++) {
-    double pos = msg.getBody()->getStabilizerPosition()->getElement(index)->getPosition();
-    // TODO: use values from URDF
-    if (pos < -1.57079632679 or pos > 1.3962634016) {
-      ROS_WARN_NAMED("StabilizerDriver", "ignored command for not reachable stabilizer %d: %f", index, pos);
-      return false;
-    }
-  }
-  return true;
+	for (unsigned int index = 0; index < msg.getBody()->getStabilizerPosition()->getNumberOfElements(); index++) {
+		double pos = msg.getBody()->getStabilizerPosition()->getElement(index)->getPosition();
+		// TODO: use values from URDF
+		if (pos < -1.57079632679 or pos > 1.3962634016) {
+			RCLCPP_WARN(logger,	"ignored command for not reachable stabilizer %d: %f", index, pos);
+			return false;
+		}
+	}
+	return true;
 }
 
 bool StabilizerDriver_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec transportData)
@@ -262,32 +274,32 @@ bool StabilizerDriver_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec 
 
 bool StabilizerDriver_ReceiveFSM::stabilizersExist(SetStabilizerEffort msg)
 {
-  for (unsigned int index = 0; index < msg.getBody()->getStabilizerEffort()->getNumberOfElements(); index++) {
-    unsigned char sid = msg.getBody()->getStabilizerEffort()->getElement(index)->getStabilizerID();
-    if (sid >= p_joint_names.size()) {
-      ROS_WARN_NAMED("StabilizerDriver", "ignored effort command for not existing stabilizer %d: %d", index, (int)sid);
-      return false;
-    }
-  }
-  return true;
+	for (unsigned int index = 0; index < msg.getBody()->getStabilizerEffort()->getNumberOfElements(); index++) {
+		unsigned char sid = msg.getBody()->getStabilizerEffort()->getElement(index)->getStabilizerID();
+		if (sid >= p_joint_names.size()) {
+			RCLCPP_WARN(logger,	"ignored effort command for not existing stabilizer %d: %d", index, (int)sid);
+			return false;
+		}
+	}
+	return true;
 }
 
 bool StabilizerDriver_ReceiveFSM::stabilizersExist(SetStabilizerPosition msg)
 {
-  for (unsigned int index = 0; index < msg.getBody()->getStabilizerPosition()->getNumberOfElements(); index++) {
-    unsigned char sid = msg.getBody()->getStabilizerPosition()->getElement(index)->getStabilizerID();
-    if (sid >= p_joint_names.size()) {
-      ROS_WARN_NAMED("StabilizerDriver", "ignored position command for not existing stabilizer %d: %d", index, (int)sid);
-      return false;
-    }
-  }
-  return true;
+	for (unsigned int index = 0; index < msg.getBody()->getStabilizerPosition()->getNumberOfElements(); index++) {
+		unsigned char sid = msg.getBody()->getStabilizerPosition()->getElement(index)->getStabilizerID();
+		if (sid >= p_joint_names.size()) {
+			RCLCPP_WARN(logger,	"ignored position command for not existing stabilizer %d: %d", index, (int)sid);
+			return false;
+		}
+	}
+	return true;
 }
 
-void StabilizerDriver_ReceiveFSM::pJoinStateCallback(const sensor_msgs::JointState::ConstPtr& joint_state)
+void StabilizerDriver_ReceiveFSM::pJoinStateCallback(const sensor_msgs::msg::JointState::SharedPtr joint_state)
 {
-  // create index map
-	p_mutex.lock();
+	// create index map
+	lock_type lock(p_mutex);
 	std::map<std::string, int> indexes;
 	std::vector<std::string>::iterator it_jn;
 	for (it_jn=p_joint_names.begin(); it_jn != p_joint_names.end(); ++it_jn) {
@@ -314,10 +326,10 @@ void StabilizerDriver_ReceiveFSM::pJoinStateCallback(const sensor_msgs::JointSta
 			} else {
 				p_joint_velocities[it_ids->first] = 0.;
 			}
-		  } else {
-			  p_joint_positions[it_ids->first] = 0.;
-			  p_joint_velocities[it_ids->first] = 0.;
-		  }
+			} else {
+				p_joint_positions[it_ids->first] = 0.;
+				p_joint_velocities[it_ids->first] = 0.;
+			}
 	}
 	while (p_stabilizer_position_report.getBody()->getStabilizerPosition()->getNumberOfElements() > 0) {
 		p_stabilizer_position_report.getBody()->getStabilizerPosition()->deleteLastElement();
@@ -330,13 +342,12 @@ void StabilizerDriver_ReceiveFSM::pJoinStateCallback(const sensor_msgs::JointSta
 		p_stabilizer_position_report.getBody()->getStabilizerPosition()->addElement(flipper_pos);
 	}
 	pEvents_ReceiveFSM->get_event_handler().set_report(QueryStabilizerPosition::ID, &p_stabilizer_position_report);
-//  printf("[ManipulatorJointPositionSensor] positions:\n");
-//  std::map<std::string, float>::iterator it_ps;
-//  for (unsigned int index = 0; index < p_joint_names.size(); index++) {
-//    printf("  %s: %f\n",  p_joint_names[index].c_str(), p_joint_positions[p_joint_names[index]]);
-//  }
-	p_mutex.unlock();
+//	printf("[ManipulatorJointPositionSensor] positions:\n");
+//	std::map<std::string, float>::iterator it_ps;
+//	for (unsigned int index = 0; index < p_joint_names.size(); index++) {
+//		printf("	%s: %f\n",	p_joint_names[index].c_str(), p_joint_positions[p_joint_names[index]]);
+//	}
 }
 
 
-};
+}

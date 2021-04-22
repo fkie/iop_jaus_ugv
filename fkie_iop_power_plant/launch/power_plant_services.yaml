@@ -1,0 +1,8 @@
+iop_power_plant:
+  ros__parameters:
+    iop_services:
+      - fkie_iop_discovery/DiscoveryClient
+      - fkie_iop_power_plant/PowerPlantManager
+    PowerPlantManager:
+      power_plants:
+        - "1.battery.voltage": 58

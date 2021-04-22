@@ -22,7 +22,7 @@ along with this program; or you can read the full license at
 
 
 #include <fkie_iop_illumination/Illuminator.h>
-#include <fkie_iop_component/iop_config.h>
+#include <fkie_iop_component/iop_config.hpp>
 
 using namespace iop;
 
@@ -77,23 +77,24 @@ Illuminator::Illuminator(){
 	p_state_str = "OFF";
 }
 
-void Illuminator::init(std::string ros_key, std::string state, std::string diagnostic_key)
+void Illuminator::init(std::shared_ptr<iop::Component> cmp, std::string ros_key, std::string state, std::string diagnostic_key)
 {
-	init(ros_key, state.compare("ON") == 0, diagnostic_key);
+	init(cmp, ros_key, state.compare("ON") == 0, diagnostic_key);
 }
 
-void Illuminator::init(std::string ros_key, bool state, std::string diagnostic_key)
+void Illuminator::init(std::shared_ptr<iop::Component> cmp, std::string ros_key, bool state, std::string diagnostic_key)
 {
 	try {
 		p_iop_key = get_iop_key(ros_key);
 		p_ros_key = ros_key;
+		p_state = state;
 		p_diagnostic_key = diagnostic_key;
-		iop::Config cfg("~Illumination");
-		p_sub_state = cfg.subscribe<std_msgs::Bool>(std::string("illuminator/") + p_ros_key, 10, &Illuminator::p_ros_state_callback, this);
-		p_pub_cmd = cfg.advertise<std_msgs::Bool>(std::string("illuminator/cmd_") + p_ros_key, 10, true);
+		iop::Config cfg(cmp, "Illumination");
+		p_sub_state = cfg.create_subscription<std_msgs::msg::Bool>(std::string("illuminator/") + p_ros_key, 10, std::bind(&Illuminator::p_ros_state_callback, this, std::placeholders::_1));
+		p_pub_cmd = cfg.create_publisher<std_msgs::msg::Bool>(std::string("illuminator/cmd_") + p_ros_key, 10);
 		p_supported = true;
 	} catch (std::exception &e) {
-		ROS_WARN_NAMED("Illumination", "init of illumination '%s' failed: %s", ros_key.c_str(), e.what());
+		RCLCPP_WARN(cmp->get_logger().get_child("Illumination"),  "init of illumination '%s' failed: %s", ros_key.c_str(), e.what());
 	}
 }
 
@@ -113,9 +114,9 @@ bool Illuminator::set_state(bool state)
 	if (is_supported()) {
 		result = true;
 		p_state = state;
-		std_msgs::Bool msg;
+		auto msg = std_msgs::msg::Bool();
 		msg.data = state;
-		p_pub_cmd.publish(msg);
+		p_pub_cmd->publish(msg);
 		if (p_state) {
 			p_state_str = "ON";
 		} else {
@@ -153,7 +154,7 @@ bool Illuminator::operator!=(Illuminator &value)
 	return !(*this == value);
 }
 
-void Illuminator::p_ros_state_callback(const std_msgs::Bool::ConstPtr& state)
+void Illuminator::p_ros_state_callback(const std_msgs::msg::Bool::SharedPtr state)
 {
 	bool new_state = (bool)state->data;
 	if (is_supported()) {
