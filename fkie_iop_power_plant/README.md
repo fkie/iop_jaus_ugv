@@ -26,7 +26,7 @@ _power_plants/ID/voltage (int_ (Default: 0))
 
 #### Subscriber:
 
-_powerplant\_`ID`/voltage (std_msgs::Float32)_
+_powerplant\_`ID`/voltage (std_msgs::msg::Float32)_
 
 > Current voltage.
 

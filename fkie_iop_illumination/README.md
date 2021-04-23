@@ -34,12 +34,12 @@ IlluminationService:
 
 #### Publisher:
 
-_illuminator/cmd_`key` (std_msgs::Bool)_
+_illuminator/cmd_`key` (std_msgs::msg::Bool)_
 
 > Command for supported light.
 
 #### Subscriber:
 
-_illuminator/`key` (std_msgs::Bool)_
+_illuminator/`key` (std_msgs::msg::Bool)_
 
 > State for supported light.
