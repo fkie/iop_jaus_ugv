@@ -3,7 +3,7 @@ This package is part of [ROS/IOP Bridge](https://github.com/fkie/iop_core/blob/m
 
 ## _fkie_iop_stabilizer_driver:_ StabilizerDriver
 
-A simple interface to control a set of flipper of a robot by velocity effort or position. The flippers can be controlled by _sensor_msgs::JointState_ or _std_msgs::Float64MultiArray_ messages. Both messages are published, so be sure to subscribe only one of them.
+A simple interface to control a set of flipper of a robot by velocity effort or position. The flippers can be controlled by _sensor_msgs::msg::JointState_ or _std_msgs::msg::Float64MultiArray_ messages. Both messages are published, so be sure to subscribe only one of them.
 
 #### Parameter:
 
@@ -28,16 +28,16 @@ StabilizerDriver:
 
 #### Publisher:
 
-_cmd_joint_states (sensor_msgs::JointState)_
+_cmd_joint_states (sensor_msgs::msg::JointState)_
 
 > Published the position or velocity commands for joints specified by _joint_names_ parameter.
 
-_flipper_velocity_controller/command (std_msgs::Float64MultiArray)_
+_flipper_velocity_controller/command (std_msgs::msg::Float64MultiArray)_
 
 > Published velocity commands as an array. The count corresponds to the count of elements specified in _joint_names_ parameter.
 
 #### Subscriber:
 
-_joint_states (sensor_msgs::JointState)_
+_joint_states (sensor_msgs::msg::JointState)_
 
 > Reads for joints specified by _joint_names_ parameter the positions of the flippers and reports them to controller.
