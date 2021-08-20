@@ -96,7 +96,7 @@ void PowerPlantManager_ReceiveFSM::setupIopConfiguration()
 				RCLCPP_WARN(logger, "unknown pawer_plant type '%s' in 'power_plants'", pptype.c_str());
 			}
 		} else {
-			RCLCPP_WARN(logger, "skipped power_plant entry '%s' because of invalid format", power_plants[i]);
+			RCLCPP_WARN(logger, "skipped power_plant entry '%s' because of invalid format", power_plants[i].c_str());
 		}
 	}
 	pEvents_ReceiveFSM->get_event_handler().set_report(QueryPowerPlantStatus::ID, &p_report_status);
