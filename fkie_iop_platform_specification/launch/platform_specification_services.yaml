@@ -1,0 +1,6 @@
+iop_services:
+  - fkie_iop_discovery/DiscoveryClient
+  - fkie_iop_platform_specification/PlatformSpecificationsService
+PlatformSpecificationsService:
+  spec:
+    mobility_platform_name: Robot

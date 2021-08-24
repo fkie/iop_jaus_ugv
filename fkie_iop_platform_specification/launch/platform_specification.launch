@@ -1,0 +1,22 @@
+<launch>
+    <arg name="id_subsystem" default="127"/>
+    <arg name="id_node" default="64"/>
+    <node name="iop_platform_specification" pkg="fkie_iop_component" exec="iop_component" output="screen" >
+        <param name="jaus_config" value="$(find-pkg-share jaustoolset)/cfg/cmp.cfg"/>
+        <param name="iop_address" value="$(var id_subsystem).$(var id_node).16"/>
+        <rosparam param="services">
+            [
+            fkie_iop_discovery: "Discovery",
+            fkie_iop_platform_specification: "PlatformSpecificationsService",
+            ]
+        </rosparam>
+        <rosparam subst_value="true">
+            Discovery:
+                system_id: 2  # 2: Subsystem Identification, 3: Node Identification, 4: Component Identification
+                system_type: 10001  # 10001: VEHICLE, 20001: OCU, 30001: OTHER_SUBSYSTEM, 40001: NODE, 50001: PAYLOAD, 60001: COMPONENT
+            PlatformSpecificationsService:
+              spec:
+                mobility_platform_name: MyRobot
+        </rosparam>
+    </node>
+</launch>
