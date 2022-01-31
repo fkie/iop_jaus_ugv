@@ -88,7 +88,7 @@ void PlatformSpecificationsService_ReceiveFSM::setupIopConfiguration()
 	cfg.param<double>("specifics.ackermann.steering_angle_range", specifics_ackermann_steering_angle_range, specifics_ackermann_steering_angle_range);
 	if (!std::isnan(specifics_ackermann_steering_angle_range))
 		report.getBody()->getPlatformData()->getPlatformSpecifics()->getAckermann()->setSteeringAngleRange(specifics_ackermann_steering_angle_range);
-	cfg.declare_param<double>("specifics.ackermann.steering_angle_range", specifics_ackermann_min_turn_radius, true,
+	cfg.declare_param<double>("specifics.ackermann.min_turn_radius", specifics_ackermann_min_turn_radius, true,
 		rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE,
 		"[meter] The radius of the smallest turn the vehicle is able to make.",
 		"Default: NAN");
