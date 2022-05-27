@@ -245,7 +245,7 @@ bool StabilizerDriver_ReceiveFSM::areReachable(SetStabilizerPosition msg)
   for (unsigned int index = 0; index < msg.getBody()->getStabilizerPosition()->getNumberOfElements(); index++) {
     double pos = msg.getBody()->getStabilizerPosition()->getElement(index)->getPosition();
     // TODO: use values from URDF
-    if (pos < -1.57079632679 or pos > 1.3962634016) {
+    if (pos > max_up_angle or pos < max_down_angle) {
       ROS_WARN_NAMED("StabilizerDriver", "ignored command for not reachable stabilizer %d: %f", index, pos);
       return false;
     }
