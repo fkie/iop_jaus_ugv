@@ -1,8 +1,8 @@
-This repository is part of [ROS/IOP Bridge](https://github.com/fkie/iop_core/blob/master/README.md).
+This repository is part of [ROS/IOP Bridge](https://github.com/fkie/iop_core/blob/noetic/README.md).
 
-[![Build Status](https://travis-ci.org/fkie/iop_jaus_ugv.svg?branch=master)](https://travis-ci.org/fkie/iop_jaus_ugv)
+[![noetic](https://github.com/fkie/iop_jaus_ugv/actions/workflows/main.yaml/badge.svg)](https://github.com/fkie/iop_jaus_ugv/actions/workflows/main.yaml)
 
-The repository contains clients designed to control services on IOP complient robot. All client services are based on ```SlaveHandlerInterface``` and use funtionality of [Slave](https://github.com/fkie/iop_core/blob/master/fkie_iop_ocu_slavelib/README.md).  
+The repository contains clients designed to control services on IOP complient robot. All client services are based on ```SlaveHandlerInterface``` and use funtionality of [Slave](https://github.com/fkie/iop_core/blob/noetic/fkie_iop_ocu_slavelib/README.md).  
 
 ### List of service plugins in this repository:
 
