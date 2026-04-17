@@ -1,0 +1,19 @@
+iop_stabilizer_driver:
+  ros__parameters:
+    iop_services:
+      - fkie_iop_discovery/DiscoveryClient
+      - fkie_iop_drive_train_driver/DriveTrainDriver
+    DriveTrainDriver:
+      supported_transmissions:
+        - PARK
+        - NEUTRAL
+        - REVERSE
+        - DRIVE
+        - OVERDRIVE
+        - L1
+        - L2
+        - L3
+        - L4
+        - L5
+        - L6
+

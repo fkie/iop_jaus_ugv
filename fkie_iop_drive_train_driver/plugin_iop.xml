@@ -1,0 +1,5 @@
+<library path="fkie_iop_drive_train_driver">
+	<class name="DriveTrainDriver" type="urn_jaus_jss_ugv_DriveTrainDriver::DriveTrainDriverService" base_class_type="JTS::Service"
+		id="urn:jaus:jss:ugv:DriveTrainDriver" version="1.0">
+	</class>
+</library>
