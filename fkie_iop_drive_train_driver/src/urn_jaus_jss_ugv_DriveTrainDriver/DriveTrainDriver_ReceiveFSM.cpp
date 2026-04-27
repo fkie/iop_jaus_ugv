@@ -27,12 +27,12 @@ using namespace JTS;
 
 namespace urn_jaus_jss_ugv_DriveTrainDriver {
 
-std::vector<std::string> DEFAULT_TRANSMISSIONS = { "PARK", "NEUTRAL", "REVERSE", "DRIVE", "OVERDRIVE", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10" };
+std::vector<std::string> DEFAULT_TRANSMISSIONS = { "DEFAULT", "PARK", "NEUTRAL", "REVERSE", "DRIVE", "OVERDRIVE", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10" };
 std::unordered_set<std::string> DEFAULT_TRANSMISSIONS_SET(
     DEFAULT_TRANSMISSIONS.begin(),
     DEFAULT_TRANSMISSIONS.end());
 
-std::vector<std::string> DEFAULT_TRANSFER_CASE = { "FWD", "AUTO_4WD", "MANUAL_LOW_4WD", "MANUAL_HIGH_4WD", "LOW_AWD", "HIGH_AWD" };
+std::vector<std::string> DEFAULT_TRANSFER_CASE = { "DEFAULT", "FWD", "AUTO_4WD", "MANUAL_LOW_4WD", "MANUAL_HIGH_4WD", "LOW_AWD", "HIGH_AWD" };
 std::unordered_set<std::string> DEFAULT_TRANSFER_CASE_SET(
     DEFAULT_TRANSFER_CASE.begin(),
     DEFAULT_TRANSFER_CASE.end());
@@ -308,6 +308,8 @@ void DriveTrainDriver_ReceiveFSM::setTransferCaseStateAction(SetTransferCaseStat
             ros_msg.data = DEFAULT_TRANSFER_CASE[stateIndex];
             p_pub_cmd_transfer_case->publish(ros_msg);
         }
+    } else {
+        RCLCPP_INFO(logger, "   not supported transfer case: %d", stateIndex);
     }
     pEvents_ReceiveFSM->get_event_handler().set_report(QueryTransferCaseState::ID, &p_transfer_case_report);
 }
@@ -323,6 +325,8 @@ void DriveTrainDriver_ReceiveFSM::setTransmissionStateAction(SetTransmissionStat
             std_msgs::msg::String ros_msg;
             ros_msg.data = DEFAULT_TRANSMISSIONS[stateIndex];
             p_pub_cmd_transmission_state->publish(ros_msg);
+        } else {
+            RCLCPP_WARN(logger, "transmission %d not supported", stateIndex);
         }
     }
     pEvents_ReceiveFSM->get_event_handler().set_report(QueryTransmissionState::ID, &p_transmission_state_report);
@@ -348,7 +352,8 @@ bool DriveTrainDriver_ReceiveFSM::isControllingClient(Receive::Body::ReceiveRec 
 bool DriveTrainDriver_ReceiveFSM::isPark(SetTransmissionState msg)
 {
     /// Insert User Code HERE
-    return msg.getBody()->getTransmissionStateRec()->getTransmissionState() == 1;
+    return true;
+    // return msg.getBody()->getTransmissionStateRec()->getTransmissionState() <= 1;
 }
 
 bool DriveTrainDriver_ReceiveFSM::isSupported(SetTransferCaseState msg)
@@ -360,6 +365,8 @@ bool DriveTrainDriver_ReceiveFSM::isSupported(SetTransferCaseState msg)
         if (supIndex != -1) {
             return true;
         }
+    } else {
+        RCLCPP_INFO(logger, " Transfer case not supported: %d", stateIndex);
     }
     return false;
 }
@@ -374,6 +381,7 @@ bool DriveTrainDriver_ReceiveFSM::isSupported(SetTransmissionState msg)
             return true;
         }
     }
+    RCLCPP_INFO(logger, " transmission not supported: %d", stateIndex);
     return false;
 }
 
@@ -381,7 +389,7 @@ void DriveTrainDriver_ReceiveFSM::pTransmissionStateCallback(const std_msgs::msg
 {
     int stateIndex = pGetIndex(DEFAULT_TRANSMISSIONS, state->data);
     if (stateIndex != -1) {
-        p_transmission_state_report.getBody()->getReportTransmissionStateRec()->setRequestedTransmissionState(stateIndex);
+        p_transmission_state_report.getBody()->getReportTransmissionStateRec()->setActualTransmissionState(stateIndex);
         pEvents_ReceiveFSM->get_event_handler().set_report(QueryTransmissionState::ID, &p_transmission_state_report);
     }
 }
