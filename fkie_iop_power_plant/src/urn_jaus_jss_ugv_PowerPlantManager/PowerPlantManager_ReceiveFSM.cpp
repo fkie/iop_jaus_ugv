@@ -108,11 +108,11 @@ void PowerPlantManager_ReceiveFSM::sendReportPowerPlantCapabilitiesAction(QueryP
 	RCLCPP_DEBUG(logger,  "send ReportPowerPlantCapabilities to %s", sender.str().c_str());
 	ReportPowerPlantCapabilities report;
 	if (p_battery_supported) {
-		ReportPowerPlantCapabilities::body::powerPlantCapabilitiesList::powerPlantCapabilitiesSeq batsec;
+		ReportPowerPlantCapabilities::Body::powerPlantCapabilitiesList::powerPlantCapabilitiesSeq batsec;
 		batsec.getPowerPlantDescRec()->setPowerPlantID(p_battery_id);
 		batsec.getPowerPlantDescRec()->setDescription(p_battery_name);
 		batsec.getPowerPlantCapabilitiesVar()->setFieldValue(2);
-		ReportPowerPlantCapabilities::body::powerPlantCapabilitiesList::powerPlantCapabilitiesSeq::powerPlantCapabilitiesVar::batteryCapabilitiesList::batteryCapabilitiesRec batteryrec;
+		ReportPowerPlantCapabilities::Body::powerPlantCapabilitiesList::powerPlantCapabilitiesSeq::powerPlantCapabilitiesVar::batteryCapabilitiesList::batteryCapabilitiesRec batteryrec;
 		batteryrec.setNominalVoltage(p_battery_max_volt);
 		batsec.getPowerPlantCapabilitiesVar()->getBatteryCapabilitiesList()->addElement(batteryrec);
 		report.getBody()->getPowerPlantCapabilitiesList()->addElement(batsec);
@@ -126,7 +126,7 @@ void PowerPlantManager_ReceiveFSM::sendReportPowerPlantConfigurationAction(Query
 	RCLCPP_DEBUG(logger,  "send ReportPowerPlantCapabilities to %s", sender.str().c_str());
 	ReportPowerPlantConfiguration report;
 	if (p_battery_supported) {
-		ReportPowerPlantConfiguration::body::powerPlantConfigurationList::powerPlantConfigurationSeq batsec;
+		ReportPowerPlantConfiguration::Body::powerPlantConfigurationList::powerPlantConfigurationSeq batsec;
 		batsec.getPowerPlantID()->setPowerPlantID(p_battery_id);
 		batsec.getPowerPlantConfigurationVar()->setFieldValue(2);
 		batsec.getPowerPlantConfigurationVar()->getBatteryConfigurationRec()->setPowerState(1);
@@ -166,12 +166,12 @@ void PowerPlantManager_ReceiveFSM::p_ros_battery_voltage(const std_msgs::msg::Fl
 	p_battery_voltage = msg->data;
 	if (p_battery_supported) {
 		ReportPowerPlantStatus report;
-		ReportPowerPlantStatus::body::powerPlantStatusList::powerPlantStatus ppstatus;
+		ReportPowerPlantStatus::Body::powerPlantStatusList::powerPlantStatus ppstatus;
 		ppstatus.getPowerPlantDescRec()->setPowerPlantID(p_battery_id);
 		ppstatus.getPowerPlantDescRec()->setDescription(p_battery_name);
 		ppstatus.getPowerPlantStatusVar()->setFieldValue(2);
-		ReportPowerPlantStatus::body::powerPlantStatusList::powerPlantStatus::powerPlantStatusVar::batteryStatus batlist;
-		ReportPowerPlantStatus::body::powerPlantStatusList::powerPlantStatus::powerPlantStatusVar::batteryStatus::batteryStatusRec batrec;
+		ReportPowerPlantStatus::Body::powerPlantStatusList::powerPlantStatus::powerPlantStatusVar::batteryStatus batlist;
+		ReportPowerPlantStatus::Body::powerPlantStatusList::powerPlantStatus::powerPlantStatusVar::batteryStatus::batteryStatusRec batrec;
 		batrec.setVoltage(p_battery_voltage);
 		batrec.setPercentChargeRemaining(p_battery_capacity_percent);
 		batlist.addElement(batrec);
@@ -188,12 +188,12 @@ void PowerPlantManager_ReceiveFSM::p_ros_battery_capacity_percent(const std_msgs
 	p_battery_capacity_percent = msg->data;
 	if (p_battery_supported) {
 		ReportPowerPlantStatus report;
-		ReportPowerPlantStatus::body::powerPlantStatusList::powerPlantStatus ppstatus;
+		ReportPowerPlantStatus::Body::powerPlantStatusList::powerPlantStatus ppstatus;
 		ppstatus.getPowerPlantDescRec()->setPowerPlantID(p_battery_id);
 		ppstatus.getPowerPlantDescRec()->setDescription(p_battery_name);
 		ppstatus.getPowerPlantStatusVar()->setFieldValue(2);
-		ReportPowerPlantStatus::body::powerPlantStatusList::powerPlantStatus::powerPlantStatusVar::batteryStatus batlist;
-		ReportPowerPlantStatus::body::powerPlantStatusList::powerPlantStatus::powerPlantStatusVar::batteryStatus::batteryStatusRec batrec;
+		ReportPowerPlantStatus::Body::powerPlantStatusList::powerPlantStatus::powerPlantStatusVar::batteryStatus batlist;
+		ReportPowerPlantStatus::Body::powerPlantStatusList::powerPlantStatus::powerPlantStatusVar::batteryStatus::batteryStatusRec batrec;
 		batrec.setVoltage(p_battery_voltage);
 		batrec.setPercentChargeRemaining(p_battery_capacity_percent);
 		batlist.addElement(batrec);
