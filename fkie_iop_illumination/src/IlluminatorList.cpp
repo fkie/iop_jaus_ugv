@@ -78,74 +78,56 @@ void IlluminatorList::init(std::shared_ptr<iop::Component> cmp)
     p_illuminator_map["HazardLights"] = new Illuminator();
 
     std::string value = "no";
-    cfg.declare_param<std::string>("head_lights", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "Headlights", "Default: no");
-    cfg.declare_param<std::string>("left_turn_signal", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "LeftTurnSignal", "Default: no");
-    cfg.declare_param<std::string>("right_turn_signal", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "RightTurnSignal", "Default: no");
-    cfg.declare_param<std::string>("running_lights", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "RunningLights", "Default: no");
-    cfg.declare_param<std::string>("brake_lights", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "BrakeLights", "Default: no");
-    cfg.declare_param<std::string>("backup_lights", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "BackupLights", "Default: no");
-    cfg.declare_param<std::string>("visible_light_source", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "VisibleLightSource", "Default: no");
-    cfg.declare_param<std::string>("ir_light_source", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "IRLightSource", "Default: no");
-    cfg.declare_param<std::string>("variable_light_1", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "VariableLight1", "Default: no");
-    cfg.declare_param<std::string>("variable_light_2", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "VariableLight2", "Default: no");
-    cfg.declare_param<std::string>("variable_light_3", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "VariableLight3", "Default: no");
-    cfg.declare_param<std::string>("variable_light_4", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "VariableLight4", "Default: no");
-    cfg.declare_param<std::string>("high_beams", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "HighBeams", "Default: no");
-    cfg.declare_param<std::string>("parking_lights", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "ParkingLights", "Default: no");
-    cfg.declare_param<std::string>("fog_lights", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "FogLights", "Default: no");
-    cfg.declare_param<std::string>("hazard_lights", value, true,
-        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
-        "HazardLights", "Default: no");
-
-    value = "no";
     bool supported = false;
     bool state = false;
-    cfg.param<std::string>("head_lights", value, value);
-    cfg.param<std::string>("left_turn_signal", value, value);
-    cfg.param<std::string>("right_turn_signal", value, value);
-    cfg.param<std::string>("running_lights", value, value);
-    cfg.param<std::string>("brake_lights", value, value);
-    cfg.param<std::string>("backup_lights", value, value);
-    cfg.param<std::string>("visible_light_source", value, value);
-    cfg.param<std::string>("ir_light_source", value, value);
-    cfg.param<std::string>("variable_light_1", value, value);
-    cfg.param<std::string>("variable_light_2", value, value);
-    cfg.param<std::string>("variable_light_3", value, value);
-    cfg.param<std::string>("variable_light_4", value, value);
-    cfg.param<std::string>("high_beams", value, value);
-    cfg.param<std::string>("parking_lights", value, value);
-    cfg.param<std::string>("fog_lights", value, value);
-    cfg.param<std::string>("hazard_lights", value, value);
+    cfg.param<std::string>("head_lights", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "Headlights", "Default: no");
+    cfg.param<std::string>("left_turn_signal", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "LeftTurnSignal", "Default: no");
+    cfg.param<std::string>("right_turn_signal", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "RightTurnSignal", "Default: no");
+    cfg.param<std::string>("running_lights", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "RunningLights", "Default: no");
+    cfg.param<std::string>("brake_lights", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "BrakeLights", "Default: no");
+    cfg.param<std::string>("backup_lights", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "BackupLights", "Default: no");
+    cfg.param<std::string>("visible_light_source", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "VisibleLightSource", "Default: no");
+    cfg.param<std::string>("ir_light_source", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "IRLightSource", "Default: no");
+    cfg.param<std::string>("variable_light_1", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "VariableLight1", "Default: no");
+    cfg.param<std::string>("variable_light_2", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "VariableLight2", "Default: no");
+    cfg.param<std::string>("variable_light_3", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "VariableLight3", "Default: no");
+    cfg.param<std::string>("variable_light_4", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "VariableLight4", "Default: no");
+    cfg.param<std::string>("high_beams", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "HighBeams", "Default: no");
+    cfg.param<std::string>("parking_lights", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "ParkingLights", "Default: no");
+    cfg.param<std::string>("fog_lights", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "FogLights", "Default: no");
+    cfg.param<std::string>("hazard_lights", value, value, true,
+        rcl_interfaces::msg::ParameterType::PARAMETER_STRING,
+        "HazardLights", "Default: no");
 
     parse_illuminator_def(value, supported, state);
     if (supported)

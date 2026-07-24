@@ -115,11 +115,10 @@ void DriveTrainDriver_ReceiveFSM::setupIopConfiguration()
     // read configuration for transmissions
     p_supported_transmissions.clear();
     std::vector<std::string> supported_transmissions;
-    cfg.declare_param<std::vector<std::string>>("supported_transmissions", DEFAULT_TRANSMISSIONS, false,
+    cfg.param_vector<std::vector<std::string>>("supported_transmissions", supported_transmissions, supported_transmissions, false,
         rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
         "Specifies a list with valid gears.",
         make_default_string(DEFAULT_TRANSMISSIONS));
-    cfg.param_vector<std::vector<std::string>>("supported_transmissions", supported_transmissions, supported_transmissions);
     for (const auto& val : supported_transmissions) {
         if (DEFAULT_TRANSMISSIONS_SET.count(val)) {
             p_supported_transmissions.push_back(val);
@@ -130,11 +129,10 @@ void DriveTrainDriver_ReceiveFSM::setupIopConfiguration()
     // read configuration for transfer cases
     p_supported_transfer_cases.clear();
     std::vector<std::string> supported_transfer_cases;
-    cfg.declare_param<std::vector<std::string>>("supported_transfer_cases", DEFAULT_TRANSFER_CASE, false,
+    cfg.param_vector<std::vector<std::string>>("supported_transfer_cases", supported_transfer_cases, supported_transfer_cases, false,
         rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
         "Specifies a list with valid gears.",
         make_default_string(DEFAULT_TRANSFER_CASE));
-    cfg.param_vector<std::vector<std::string>>("supported_transfer_cases", supported_transfer_cases, supported_transfer_cases);
     for (const auto& val : supported_transfer_cases) {
         if (DEFAULT_TRANSFER_CASE_SET.count(val)) {
             p_supported_transfer_cases.push_back(val);

@@ -84,21 +84,18 @@ void StabilizerDriver_ReceiveFSM::setupIopConfiguration()
 {
     iop::Config cfg(cmp, "StabilizerDriver");
     pEvents_ReceiveFSM->get_event_handler().register_query(QueryStabilizerPosition::ID);
-    cfg.declare_param<double>("max_up_angle", max_up_angle, true,
+    cfg.param<double>("max_up_angle", max_up_angle, max_up_angle, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE,
         "The maximum supported angle for _all_ flipper. This value is only used for capabilities report.",
         "Default: 1.5708");
-    cfg.declare_param<double>("max_down_angle", max_down_angle, true,
+    cfg.param<double>("max_down_angle", max_down_angle, max_down_angle, true,
         rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE,
         "The minimum supported angle for _all_ flipper. This value is only used for capabilities report.",
         "Default: -1.5708");
-    cfg.declare_param<std::vector<std::string>>("joint_names", p_joint_names, false,
+    cfg.param_vector<std::vector<std::string>>("joint_names", p_joint_names, p_joint_names, false,
         rcl_interfaces::msg::ParameterType::PARAMETER_STRING_ARRAY,
         "Specifies a list with joint names. This is important to get the position of flipper.",
         "Default: []");
-    cfg.param("max_up_angle", max_up_angle, max_up_angle);
-    cfg.param("max_down_angle", max_down_angle, max_down_angle);
-    cfg.param_vector<std::vector<std::string>>("joint_names", p_joint_names, p_joint_names);
     // TODO: get limits and positions of each flipper from URDF
     //	 integrate into iop_manipulator_core_fkie::ManipulatorUrdfReader
     for (unsigned int index = 0; index < p_joint_names.size(); index++) {
