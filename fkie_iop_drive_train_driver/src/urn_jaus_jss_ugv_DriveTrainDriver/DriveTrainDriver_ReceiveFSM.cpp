@@ -19,7 +19,7 @@ along with this program; or you can read the full license at
 */
 
 /** \author Alexander Tiderko */
-
+#include <unordered_set>
 #include "urn_jaus_jss_ugv_DriveTrainDriver/DriveTrainDriver_ReceiveFSM.h"
 #include <fkie_iop_component/iop_config.hpp>
 
